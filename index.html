@@ -1,1 +1,245 @@
 
+<script>
+// ===== APEX-PROTECT-BEGIN (v7-loader) =====
+(function(){
+  if (window.APEX_V7?.active) return;
+  const APEX_V7 = { active:true, version:'7' };
+  Object.defineProperty(window,'APEX_V7',{value:Object.freeze(APEX_V7)});
+
+  // Safe schedule: wait for game objects; never throw.
+  function ready(fn, tries=0){
+    if (tries>80) return;
+    try { 
+      if (window.CanonicalPremiseGenerator || window.game || window.APEX) return fn();
+    } catch(e){}
+    setTimeout(()=>ready(fn, tries+1), 50);
+  }
+
+  // Idempotent install; no prototype deletion, no UI edits:
+  ready(installV7);
+
+  function installV7(){
+    try { V7_variety(); V7_matchResynthesis(); } catch(e){}
+  }
+
+  // ===== APEX-PROTECT-END (v7-loader) =====
+</script>
+<script>
+// ===== APEX-PROTECT-BEGIN (v7-pools) =====
+(function(){
+  if (window.APEX_V7_POOLS) return;
+
+  // Canonical maps (surface → canonical op/rel/vec). No new primitives.
+  const ACTION2OP = Object.freeze({
+    // PUSH family
+    "pushes":"PUSH","nudges":"PUSH","taps":"PUSH","guides":"PUSH","steers":"PUSH","slides":"PUSH",
+    "eases":"PUSH","presses":"PUSH","launches":"PUSH","propels":"PUSH","shoves":"PUSH","boosts":"PUSH",
+    // PULL family
+    "pulls":"PULL","draws":"PULL","drags":"PULL","reels":"PULL","yanks":"PULL","tows":"PULL","hauls":"PULL",
+    // ROTATE / ORBIT family
+    "rotates":"ROTATE","tilts":"ROTATE","spins":"ROTATE","twists":"ROTATE","turns":"ROTATE","pivots":"ROTATE",
+    "rolls":"ROTATE","swivels":"ROTATE","circles":"ROTATE","orbits":"ROTATE","wheels":"ROTATE",
+    // MERGE / SPLIT family
+    "merges":"MERGE","links":"MERGE","fuses":"MERGE","joins":"MERGE","binds":"MERGE","pairs":"MERGE","unites":"MERGE",
+    "splits":"SPLIT","detaches":"SPLIT","severs":"SPLIT","breaks":"SPLIT","peels":"SPLIT","separates":"SPLIT","cleaves":"SPLIT",
+    // TRANSFORM family
+    "transforms":"TRANSFORM","aligns":"TRANSFORM","shapes":"TRANSFORM","molds":"TRANSFORM","remaps":"TRANSFORM",
+    "reframes":"TRANSFORM","resets":"TRANSFORM","balances":"TRANSFORM","tunes":"TRANSFORM","orders":"TRANSFORM","levels":"TRANSFORM",
+    // INHIBIT / DAMP / AMPLIFY
+    "brakes":"INHIBIT","stalls":"INHIBIT","halts":"INHIBIT","hinders":"INHIBIT","blocks":"INHIBIT",
+    "damps":"DAMP","mutes":"DAMP","softens":"DAMP","steadies":"DAMP",
+    "amplifies":"AMPLIFY","accelerates":"AMPLIFY","charges":"AMPLIFY","energizes":"AMPLIFY","sharpens":"AMPLIFY","heightens":"AMPLIFY","speeds":"AMPLIFY","lifts":"AMPLIFY"
+  });
+
+  const CONN2REL = Object.freeze({
+    "toward":"TOWARD","into":"INTO","onto":"ONTO","along":"ALONG","near":"NEAR","inside":"WITHIN","outside":"OUT_OF",
+    "over":"OVER","under":"UNDER","by":"BY","via":"VIA","next-to":"NEXT_TO","through":"THROUGH","across":"ACROSS",
+    "around":"AROUND","between":"BETWEEN","beyond":"BEYOND","against":"AGAINST","alongside":"ALONGSIDE","out-of":"OUT_OF",
+    "up-to":"UP_TO","past":"PAST","from":"FROM","within":"WITHIN","beside":"BESIDE","across-from":"ACROSS_FROM","around-to":"AROUND_TO",
+    "over-to":"OVER_TO","under-to":"UNDER_TO","near-to":"NEAR_TO","back-to":"BACK_TO","towards":"TOWARD"
+  });
+
+  const DIR2VEC = Object.freeze({
+    "upward":"UP","downward":"DOWN","leftward":"LEFT","rightward":"RIGHT",
+    "forward":"FORWARD","backward":"BACK","inward":"IN","outward":"OUT","still":"ZERO",
+    "north":"NORTH","south":"SOUTH","east":"EAST","west":"WEST",
+    "clockwise":"CW","counterclockwise":"CCW",
+    "up-left":"UP_LEFT","up-right":"UP_RIGHT","down-left":"DOWN_LEFT","down-right":"DOWN_RIGHT",
+    "centerward":"IN","edgeward":"OUT","ahead":"FORWARD","behind":"BACK","nearby":"ZERO","far":"OUT"
+  });
+
+  // Ten new terms each per level (Actions/Connections/Directions), no cross-level overlaps.
+  const L = Object.create(null);
+  const F = a => Object.freeze(a);
+
+  // Level 1
+  L[1]={ actions:F(["nudges","taps","guides","steers","slides","eases","presses","draws","tilts","aligns"]),
+         conns:F(["onto","along","near","inside","outside","over","under","by","via","next-to"]),
+         dirs:F(["forward","backward","inward","outward","still","north","south","east","west","ahead"]) };
+
+  // Level 2
+  L[2]={ actions:F(["shoves","reels","yanks","tows","hauls","turns","rolls","joins","pairs","balances"]),
+         conns:F(["through","across","around","between","beyond","against","alongside","out-of","up-to","past"]),
+         dirs:F(["up-left","up-right","down-left","down-right","clockwise","counterclockwise","centerward","edgeward","behind","nearby"]) };
+
+  // Level 3
+  L[3]={ actions:F(["launches","propels","boosts","links","fuses","binds","unites","wheels","swivels","orders"]),
+         conns:F(["from","within","beside","over-to","under-to","around-to","across-from","near-to","back-to","towards"]),
+         dirs:F(["far","ahead","behind","north","south","east","west","inward","outward","still"]) };
+
+  // Level 4
+  L[4]={ actions:F(["spins","twists","pivots","circles","orbits","molds","shapes","remaps","reframes","levels"]),
+         conns:F(["onto","through","between","near","against","alongside","out-of","up-to","by","via"]),
+         dirs:F(["clockwise","counterclockwise","up-left","up-right","down-left","down-right","centerward","edgeward","ahead","behind"]) };
+
+  // Level 5
+  L[5]={ actions:F(["detaches","severs","breaks","peels","separates","cleaves","tunes","resets","steadies","softens"]),
+         conns:F(["along","around","past","beyond","within","inside","outside","beside","over","under"]),
+         dirs:F(["forward","backward","inward","outward","north","south","east","west","still","nearby"]) };
+
+  // Level 6
+  L[6]={ actions:F(["charges","energizes","amplifies","accelerates","sharpens","heightens","speeds","brakes","stalls","halts"]),
+         conns:F(["across","through","between","against","alongside","out-of","up-to","from","via","next-to"]),
+         dirs:F(["clockwise","counterclockwise","up-left","up-right","down-left","down-right","centerward","edgeward","ahead","behind"]) };
+
+  // Level 7
+  L[7]={ actions:F(["blocks","hinders","mutes","damps","presses","slides","guides","steers","draws","turns"]),
+         conns:F(["onto","along","around","past","beyond","within","beside","over","under","across-from"]),
+         dirs:F(["forward","backward","inward","outward","north","south","east","west","still","far"]) };
+
+  // Level 8
+  L[8]={ actions:F(["wheels","pivots","swivels","circles","rolls","levels","tunes","balances","reframes","remaps"]),
+         conns:F(["through","between","near","against","alongside","out-of","up-to","from","via","by"]),
+         dirs:F(["clockwise","counterclockwise","up-left","up-right","down-left","down-right","centerward","edgeward","ahead","behind"]) };
+
+  // Level 9
+  L[9]={ actions:F(["joins","pairs","links","fuses","binds","detaches","severs","splits","peels","cleaves"]),
+         conns:F(["along","around","past","beyond","within","inside","outside","beside","over","under"]),
+         dirs:F(["forward","backward","inward","outward","north","south","east","west","still","nearby"]) };
+
+  // Level 10
+  L[10]={ actions:F(["amplifies","charges","energizes","sharpens","heightens","steadies","mutes","softens","damps","accelerates"]),
+          conns:F(["across","through","between","against","alongside","out-of","up-to","across-from","around-to","next-to"]),
+          dirs:F(["clockwise","counterclockwise","up-left","up-right","down-left","down-right","centerward","edgeward","ahead","behind"]) };
+
+  Object.freeze(L);
+  window.APEX_V7_POOLS = L;
+  window.APEX_V7_MAPS  = Object.freeze({ ACTION2OP, CONN2REL, DIR2VEC });
+})();
+// ===== APEX-PROTECT-END (v7-pools) =====
+</script>
+<script>
+// ===== APEX-PROTECT-BEGIN (v7-variety) =====
+function V7_variety(){
+  if (window.__APEX_V7_VAR_INSTALLED__) return; window.__APEX_V7_VAR_INSTALLED__=true;
+  const MAPS = window.APEX_V7_MAPS, POOLS = window.APEX_V7_POOLS; if (!MAPS||!POOLS) return;
+
+  const caseNorm = true;
+  const up = s => caseNorm ? String(s||'').toUpperCase() : String(s||'');
+
+  // Rolling quotas per channel; ensures ≥80% picks from V7 pool for low levels
+  const QUOTA = { window: 24, minFrac: lvl => (lvl<=3?0.85 : lvl<=5?0.8 : 0.7) };
+  const hist = { act:[], con:[], dir:[] };
+  const pushH = (k,v)=>{ hist[k].push(v?1:0); if(hist[k].length>QUOTA.window) hist[k].shift(); };
+  const under = k => (hist[k].reduce((a,b)=>a+b,0)/Math.max(1,hist[k].length)) < QUOTA.minFrac(getLvl());
+
+  const recentTriples = [];
+  const seenTri = (a,b,c)=> recentTriples.includes([a,b,c].join('|'));
+  const markTri = (a,b,c)=>{ const k=[a,b,c].join('|'); recentTriples.push(k); if(recentTriples.length>120) recentTriples.shift(); };
+
+  function getLvl(){ try { return Number(window.game?.difficultyLevel)||1; } catch(e){ return 1; } }
+
+  function uniqUnion(a,b){ const s=new Set(), out=[]; (a||[]).concat(b||[]).forEach(x=>{const y=String(x); if(!s.has(y)){s.add(y); out.push(y);} }); return out; }
+  function pick(a){ return a[Math.floor(Math.random()*a.length)] }
+
+  function pickAction(canonOp){
+    const lvl = getLvl(), add = POOLS[lvl]?.actions||[], base = Object.keys(MAPS.ACTION2OP);
+    let src = uniqUnion(base, add);
+    if (canonOp){ const f = src.filter(w=>MAPS.ACTION2OP[w]===canonOp); if (f.length) src=f; }
+    if (under('act') && add.length){
+      const v = canonOp ? add.filter(w=>MAPS.ACTION2OP[w]===canonOp) : add;
+      if (v.length){ const c=pick(v); pushH('act',true); return c; }
+    }
+    const c = pick(src); pushH('act', add.includes(c)); return c;
+  }
+
+  function pickConn(){
+    const lvl = getLvl(), add = POOLS[lvl]?.conns||[], base = Object.keys(MAPS.CONN2REL);
+    let src = uniqUnion(base, add);
+    if (under('con') && add.length){ const c=pick(add); pushH('con',true); return c; }
+    const c = pick(src); pushH('con', add.includes(c)); return c;
+  }
+
+  function pickDir(canonDir){
+    const lvl = getLvl(), add = POOLS[lvl]?.dirs||[], base = Object.keys(MAPS.DIR2VEC);
+    let src = uniqUnion(base, add);
+    if (canonDir){ const f = src.filter(w=>MAPS.DIR2VEC[w]===canonDir); if (f.length) src=f; }
+    if (under('dir') && add.length){
+      const v = canonDir ? add.filter(w=>MAPS.DIR2VEC[w]===canonDir) : add;
+      if (v.length){ const c=pick(v); pushH('dir',true); return c; }
+    }
+    const c = pick(src); pushH('dir', add.includes(c)); return c;
+  }
+
+  // Hook without overwriting: decorate build step if present; else provide a soft shim.
+  const Gen = window.CanonicalPremiseGenerator;
+  if (!Gen || !Gen.prototype) return;
+
+  if (!Gen.prototype.__APEX_V7_DECOR__){
+    Object.defineProperty(Gen.prototype,'__APEX_V7_DECOR__',{value:true});
+    const origBuild = Gen.prototype.buildSurface;
+
+    Gen.prototype.buildSurface = function(canonPlan, gates){
+      try{
+        const base = origBuild ? origBuild.call(this, canonPlan, gates) : {};
+        let tries=0, v, r, d;
+        do{
+          v = up(pickAction(canonPlan?.op));
+          r = up(pickConn());
+          d = up(pickDir(canonPlan?.direction));
+          tries++;
+        } while (seenTri(v,r,d) && tries<40);
+        markTri(v,r,d);
+        return { ...(base||{}), verb:v, relation:r, tail:d };
+      }catch(e){
+        return origBuild ? origBuild.call(this, canonPlan, gates) : { verb:'PUSHES', relation:'INTO', tail:'RIGHTWARD' };
+      }
+    };
+  }
+}
+// ===== APEX-PROTECT-END (v7-variety) =====
+</script>
+<script>
+// ===== APEX-PROTECT-BEGIN (v7-match) =====
+function V7_matchResynthesis(){
+  if (window.__APEX_V7_MATCH_INSTALLED__) return; window.__APEX_V7_MATCH_INSTALLED__=true;
+  const MAPS = window.APEX_V7_MAPS; if (!MAPS) return;
+
+  const Gen = window.CanonicalPremiseGenerator;
+  if (!Gen || !Gen.prototype) return;
+  const up = s => String(s||'').toUpperCase();
+
+  const oldMatch = Gen.prototype.generateMatching;
+  if (!oldMatch) return;
+
+  Gen.prototype.generateMatching = function(refIndex, registry){
+    const prem = oldMatch.call(this, refIndex, registry);
+    try{
+      const canon = prem?.canonical || (this.getCanonicalPlanFrom && this.getCanonicalPlanFrom(refIndex, registry)) || null;
+      const surfaceTokens = prem.surfaceTokens || prem.surface?.split(/\s+/) || [];
+      if (surfaceTokens.length>=5){
+        const s = (this.buildSurface && this.buildSurface(canon, null)) || {};
+        if (s.verb && s.relation && s.tail){
+          surfaceTokens[1] = up(s.verb);
+          surfaceTokens[3] = up(s.relation);
+          surfaceTokens[4] = up(s.tail);
+          prem.surface = surfaceTokens.join(' ');
+          prem.surfaceTokens = surfaceTokens;
+        }
+      }
+    }catch(e){ /* no-op */ }
+    return prem;
+  };
+}
+// ===== APEX-PROTECT-END (v7-match) =====
+</script>
